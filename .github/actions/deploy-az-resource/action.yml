@@ -1,0 +1,19 @@
+name: 'Deploy Azure Resource'
+
+inputs:
+  az_rg_n:
+    description: “Azure ResourceGroup name”
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    # Deploy Bicep file
+  - name: deploy
+    uses: azure/arm-deploy@v1
+    with:
+      scope: resourcegroup
+      resourceGroupName: ${{ inputs.az_rg_n }}
+      deploymentMode: Incremental
+      template: ./main.bicep
+      failOnStdErr: false
