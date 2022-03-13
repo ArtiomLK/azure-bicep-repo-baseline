@@ -43,7 +43,7 @@ var snet_app_vnet_pe_id_parsed = split(snet_app_vnet_pe_id, ',')
 
 // pdnszgroup - Add A records to PDNSZ for app pe
 @description('App Service Private DNS Zone Resource ID where the A records will be written')
-param pdnsz_app_id string
+param pdnsz_app_id string = ''
 var pdnsz_app_parsed_id = {
   sub_id: substring(substring(pdnsz_app_id, indexOf(pdnsz_app_id, 'subscriptions/') + 14), 0, indexOf(substring(pdnsz_app_id, indexOf(pdnsz_app_id, 'subscriptions/') + 14), '/'))
   rg_n: substring(substring(pdnsz_app_id, indexOf(pdnsz_app_id, 'resourceGroups/') + 15), 0, indexOf(substring(pdnsz_app_id, indexOf(pdnsz_app_id, 'resourceGroups/') + 15), '/'))
