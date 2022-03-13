@@ -38,7 +38,7 @@ var app_enable_pendpoints_parsed = split(app_enable_pendpoints, ',')
 var app_enable_pe = contains(app_enable_pendpoints_parsed, 'true')
 
 @description('subnets IDs to Enbable App Private Endpoints Connections')
-param snet_app_vnet_pe_id string
+param snet_app_vnet_pe_id string = ''
 var snet_app_vnet_pe_id_parsed = split(snet_app_vnet_pe_id, ',')
 
 // pdnszgroup - Add A records to PDNSZ for app pe
