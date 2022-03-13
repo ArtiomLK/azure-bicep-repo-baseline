@@ -29,7 +29,7 @@ param app_min_tls_v string
 var app_min_tls_v_parsed = split(app_min_tls_v, ',')
 
 @description('Enable app Virtual Network Integration by providing a subnet ID')
-param snet_plan_vnet_integration_id string
+param snet_plan_vnet_integration_id string = ''
 var snet_plan_vnet_integration_id_parsed = split(snet_plan_vnet_integration_id, ',')
 
 @description('Enbable App Private Endpoints Connections')
@@ -50,20 +50,23 @@ var pdnsz_app_parsed_id = {
   res_n: substring(pdnsz_app_id, lastIndexOf(pdnsz_app_id, '/')+1)
 }
 
+var app_properties = [for i in range(0, length(app_names_parsed)): {
+  serverFarmId: length(plan_id_parsed) == 1 ? plan_id_parsed[0] : app_names_parsed[i]
+  httpsOnly: length(app_enable_https_only_parsed) == 1 ? app_enable_https_only_parsed[0] : app_enable_https_only_parsed[i]
+  siteConfig: {
+    minTlsVersion: length(app_min_tls_v_parsed) == 1 ? app_min_tls_v_parsed[0] : app_min_tls_v_parsed[i]
+  }
+}]
+
 // ------------------------------------------------------------------------------------------------
 // Deploy Application
 // ------------------------------------------------------------------------------------------------
 resource appService 'Microsoft.Web/sites@2021-03-01' = [for i in range(0, length(app_names_parsed)): {
   name: app_names_parsed[i]
   location: location
-  properties: {
-    serverFarmId: length(plan_id_parsed) == 1 ? plan_id_parsed[0] : app_names_parsed[i]
-    httpsOnly: length(app_enable_https_only_parsed) == 1 ? app_enable_https_only_parsed[0] : app_enable_https_only_parsed[i]
-    siteConfig: {
-      minTlsVersion: length(app_min_tls_v_parsed) == 1 ? app_min_tls_v_parsed[0] : app_min_tls_v_parsed[i]
-    }
-    virtualNetworkSubnetId: length(snet_plan_vnet_integration_id_parsed) == 1 ? snet_plan_vnet_integration_id_parsed[0] : snet_plan_vnet_integration_id_parsed[i]
-  }
+  properties: empty(snet_plan_vnet_integration_id) ? app_properties[0] : union(app_properties[0], {
+    virtualNetworkSubnetId: snet_plan_vnet_integration_id
+  })
   tags: tags
 }]
 
