@@ -25,7 +25,7 @@ param location string
   'P2V3'
   'P3V3'
 ])
-param plan_sku_code string
+param plan_sku_code string = 'F1'
 
 @description('App Service Plan SKU Tier')
 @allowed([
@@ -35,14 +35,20 @@ param plan_sku_code string
   'PremiumV2'
   'PremiumV3'
 ])
-param plan_sku_tier string
+param plan_sku_tier string = 'Free'
 
 @description('App Service Plan Name')
 param plan_n string
 
-@description('Enable App Service Plan High Availability')
-param plan_enable_zone_redundancy bool // CAN'T BE UPDATED AFTER RESOURCE DEPLOYMENT
+@description('App Service Plan OS kind')
+@allowed([
+  'windows'
+  'linux'
+])
+param plan_os_kind string = 'windows'
 
+@description('Enable App Service Plan High Availability Zone Redundancy')
+param plan_enable_zone_redundancy bool = false // CAN'T BE UPDATED AFTER RESOURCE DEPLOYMENT
 
 // ------------------------------------------------------------------------------------------------
 // Deploy Azure Resources
@@ -51,6 +57,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   tags: tags
   name: plan_n
   location: location
+  kind: plan_os_kind == 'linux' ? 'linux' : ''
   sku: {
     name: plan_sku_code
     tier: plan_sku_tier
@@ -58,6 +65,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   }
   properties: {
     zoneRedundant: plan_enable_zone_redundancy
+    reserved: plan_os_kind == 'linux'
   }
 }
 
