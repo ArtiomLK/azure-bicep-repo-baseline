@@ -1,43 +1,51 @@
-# Azure App Service Plan
+# Azure Application Gateway
 
 ## Instructions
 
 ### Parameter Values
 
-| Name                        | Description                                                                                  | Value                         | Examples                                                             |
-| --------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------- |
-| tags                        | Az Resources tags                                                                            | object                        | `{ key: value }`                                                     |
-| location                    | Az Resources deployment location. To get Az regions run `az account list-locations -o table` | string [default: rg location] | `eastus` \| `centralus` \| `westus` \| `westus2` \| `southcentralus` |
-| plan_n                      | App Service Plan Name                                                                        | string [required]             |                                                                      |
-| plan_sku_code               | App Service Plan Size                                                                        | string [default: `F1`]        | `F1` \| `S2` \| `P1V2` \| `P3V2` \| `P3V3`                           |
-| plan_sku_tier               | App Service Plan SKU Tier                                                                    | string [default: `Free`]      | `Free` \| `Basic` \| `Standard` \| `PremiumV2` \| `PremiumV3`        |
-| plan_os_kind                | App Service Plan OS kind                                                                     | string [default: `windows`]   | `windows` \| `'linux'`                                               |
-| plan_enable_zone_redundancy | Enable App Service Plan High Availability Zone Redundancy                                    | string                        |                                                                      |
+| Name                       | Description                                                                                  | Value                         | Examples                                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| tags                       | Az Resources tags                                                                            | object                        | `{ key: value }`                                                                                                      |
+| location                   | Az Resources deployment location. To get Az regions run `az account list-locations -o table` | string [default: rg location] | `eastus` \| `centralus` \| `westus` \| `westus2` \| `southcentralus`                                                  |
+| agw_n                      | Application Gateway Name                                                                     | string [required]             |                                                                                                                       |
+| agw_enable_autoscaling     | Application Gateway Enable Autoscaling. Standard_v2 & WAF_V2 supports autoscaling            | string [default: `false`]     | `true` \| `false`                                                                                                     |
+| agw_enable_zone_redundancy | Application Gateway Enable Zone Redundancy Flag                                              | string [default: `false`]     | `true` \| `false`                                                                                                     |
+| agw_sku                    | Application Gateway sku size                                                                 | string [required]             | `Standard_Small` \| `Standard_Medium` \| `Standard_Large` \| `WAF_Medium` \| `WAF_Large` \| `Standard_v2` \| `WAF_v2` |
+| agw_tier                   | Application Gateway tier type                                                                | string [required]             | `Standard` \| `WAF` \| `Standard_v2` \| `WAF_v2`                                                                      |
+| agw_capacity               | Application Gateway initial capacity                                                         | int [default: `1`]            |                                                                                                                       |
+| agw_max_capacity           | Application Gateway initial capacity                                                         | int [default: `10`]           |                                                                                                                       |
+| snet_agw_id                | Application Gateway deployment subnet ID                                                     | string  [required]            |                                                                                                                       |
+| snet_agw_addr              | Application Gateway deployment subnet Address space                                          | string                        | `192.168.0.24`                                                                                                        |
+| agw_backend_app_names      | BackendPool App Services Names                                                               | string  [required]            | `appA,appB,appC` \| `appA` \| `appA,appB`                                                                             |
+| agw_front_end_ports        | Application Gateway Front End Ports                                                          | string  [required]            | `8080,80,8081` \| `8080` \| `8080,8081`                                                                               |
+| agw_pip_n                  | Application Gateway Public Ip Name                                                           | string  [required]            | `8080,80,8081` \| `8080` \| `8080,8081`                                                                               |
 
 ### Conditional Parameter Values
 
-#### App Service Plan Combinations
+Application Gateway Combinations:
 
-Only PremiumV2 and PremiumV3 allow Hight Availability Zone Redundancy
-
-- App Service Plan **Free**:
-  - `Free`
-    - `F1`
-- App Service Plan **Basic**:
-  - `Standard`
-    - `S1`
-    - `S2`
-    - `S3`
-- App Service Plan **PremiumV2** allows Hight Availability Zone Redundancy:
-  - `PremiumV2`
-    - `P1V2`
-    - `P2V2`
-    - `P3V2`
-- App Service Plan **PremiumV3** allows Hight Availability Zone Redundancy:
-  - `PremiumV3`
-    - `P1V3`
-    - `P2V3`
-    - `P3V3`
+- `Standard`
+  - SKU Tier:
+    - `Standard_Small`
+    - `Standard_Medium`
+    - `Standard_Large`
+  - agw_capacity: [1,32]
+- `WAF`
+  - SKU Tier:
+    - `WAF_Medium`
+    - `WAF_Large`
+  - agw_capacity: [1,32]
+- `Standard_v2`
+  - SKU Tier:
+    - `Standard_v2`
+  - agw_enable_autoscaling available
+  - agw_capacity: [0,125]
+- `WAF_v2`
+  - SKU Tier:
+    - `WAF_v2`
+  - agw_enable_autoscaling available
+  - agw_capacity: [0,125]
 
 ### [Reference Examples][1]
 
@@ -46,13 +54,13 @@ Only PremiumV2 and PremiumV3 allow Hight Availability Zone Redundancy
 ```bash
 # Create an Azure Resource Group
 az group create \
---name 'rg-azure-bicep-app-service-plan' \
+--name 'rg-azure-bicep-application-gateway' \
 --location 'eastus2' \
 --tags project=bicephub env=dev
 
 # Deploy Sample Modules
 az deployment group create \
---resource-group 'rg-azure-bicep-app-service-plan' \
+--resource-group 'rg-azure-bicep-application-gateway' \
 --mode Complete \
 --template-file examples/examples.bicep
 ```

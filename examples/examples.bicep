@@ -8,6 +8,10 @@ var tags = {
   env: 'dev'
 }
 
+param location string = 'eastus'
+// Sample App Service Plan parameters
+param plan_enable_zone_redundancy bool = false
+
 // ------------------------------------------------------------------------------------------------
 // REPLACE
 // '../main.bicep' by the ref with your version, for example:
@@ -15,114 +19,208 @@ var tags = {
 // ------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------
-// Windows App Service Plan examples
+// Applciation Gateway Networking Configurations Examples
 // ------------------------------------------------------------------------------------------------
-module DefaultPlan '../main.bicep' = {
-  name: 'DefaultPlan'
-  params: {
-    plan_n: 'plan-DefaultPlan'
-    location: 'eastus2'
+var vnet_addr = '192.160.0.0/20'
+var snet_count = 16
+var subnets = [ for i in range(0, snet_count) : {
+    name: 'snet-${i}-agw-azure-bicep'
+    subnetPrefix: '192.160.${i}.0/24'
+    privateEndpointNetworkPolicies: 'Enabled'
+    delegations: []
+  }]
+
+resource vnetApp 'Microsoft.Network/virtualNetworks@2021-02-01' = {
+  name: 'vnet-azure-bicep-app-service'
+  location: location
+  tags: tags
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        vnet_addr
+      ]
+    }
+    subnets: [for subnet in subnets: {
+      name: subnet.name
+      properties: {
+        addressPrefix: subnet.subnetPrefix
+        delegations: subnet.delegations
+        privateEndpointNetworkPolicies: subnet.privateEndpointNetworkPolicies
+      }
+    }]
   }
 }
 
-module DeployOnePlanPremiumv3 '../main.bicep' = {
-  name: 'DeployOnePlanPremiumv3'
-  params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'P1V3'
-    plan_sku_tier: 'PremiumV3'
-    plan_n: 'plan-DeployOnePlanPremiumv3'
-    location: 'eastus2'
-    tags: tags
+// Create a Windows Sample App Service Plan
+resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
+  tags: tags
+  name: 'plan-azure-bicep-app-service-test'
+  location: location
+  sku: {
+    name: 'P1V3'
+    tier: 'PremiumV3'
+    capacity: plan_enable_zone_redundancy ? 3 : 1
+  }
+  properties: {
+    zoneRedundant: plan_enable_zone_redundancy
   }
 }
 
-module DeployOnePlanPremiumv2HA '../main.bicep' = {
-  name: 'DeployOnePlanPremiumv2HA'
-  params: {
-    plan_enable_zone_redundancy: true
-    plan_sku_code: 'P1V2'
-    plan_sku_tier: 'PremiumV2'
-    plan_n: 'plan-DeployOnePlanPremiumv2HA'
-    location: 'eastus'
-    tags: tags
+resource appA 'Microsoft.Web/sites@2018-11-01' = {
+  name: take('appA-${guid(subscription().id, resourceGroup().id, tags.env)}', 60)
+  location: location
+  tags: tags
+  properties: {
+    serverFarmId: appServicePlan.id
   }
 }
 
-module DeployOnePlanStandard '../main.bicep' = {
-  name: 'DeployOnePlanStandard'
-  params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'S2'
-    plan_sku_tier: 'Standard'
-    plan_n: 'plan-DeployOnePlanStandard'
-    location: 'centralus'
-    tags: tags
+resource appB 'Microsoft.Web/sites@2018-11-01' = {
+  name: take('appB-${guid(subscription().id, resourceGroup().id, tags.env)}', 60)
+  location: location
+  tags: tags
+  properties: {
+    serverFarmId: appServicePlan.id
   }
 }
 
-module DeployOnePlanBasic '../main.bicep' = {
-  name: 'DeployOnePlanBasic'
-  params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'B1'
-    plan_sku_tier: 'Basic'
-    plan_n: 'plan-DeployOnePlanBasic'
-    location: 'westus'
-    tags: tags
+resource appC 'Microsoft.Web/sites@2018-11-01' = {
+  name: take('appC-${guid(subscription().id, resourceGroup().id, tags.env)}', 60)
+  location: location
+  tags: tags
+  properties: {
+    serverFarmId: appServicePlan.id
   }
 }
 
-module DeployOnePlanFree '../main.bicep' = {
-  name: 'DeployOnePlanFree'
-  params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'F1'
-    plan_sku_tier: 'Free'
-    plan_n: 'plan-DeployOnePlanFree'
-    location: 'southcentralus'
-    tags: tags
-  }
-}
-
-module DeployOneLinuxPlanPremiumv2 '../main.bicep' = {
-  name: 'DeployOneLinuxPlanPremiumv2'
-  params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'P2V2'
-    plan_sku_tier: 'PremiumV2'
-    plan_n: 'plan-DeployOneLinuxPlanPremiumv2'
-    plan_os_kind: 'linux'
-    location: 'eastus'
-    tags: tags
+resource appN 'Microsoft.Web/sites@2018-11-01' = {
+  name: take('appN-${guid(subscription().id, resourceGroup().id, tags.env)}', 60)
+  location: location
+  tags: tags
+  properties: {
+    serverFarmId: appServicePlan.id
   }
 }
 
 // ------------------------------------------------------------------------------------------------
-// Linux App Service Plan examples
+// Applciation Gateway Deployment Examples
 // ------------------------------------------------------------------------------------------------
-module DeployOneLinuxPlanStandard '../main.bicep' = {
-  name: 'DeployOneLinuxPlanStandard'
+module DeployAgwOneAppStandardSmall '../main.bicep' = {
+  name: 'DeployAgwOneAppStandardSmall'
   params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'S2'
-    plan_sku_tier: 'Standard'
-    plan_n: 'plan-DeployOneLinuxPlanStandard'
-    plan_os_kind: 'linux'
-    location: 'centralus'
-    tags: tags
+    location: location
+    agw_backend_app_names: appN.name
+    agw_sku: 'Standard_Small'
+    agw_tier: 'Standard'
+    snet_agw_id: vnetApp.properties.subnets[0].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppStandardSmall'
   }
 }
 
-module DeployOneLinuxPlanFree '../main.bicep' = {
-  name: 'DeployOneLinuxPlanFree'
+module DeployAgwOneAppStandardMedium '../main.bicep' = {
+  name: 'DeployAgwOneAppStandardMedium'
   params: {
-    plan_enable_zone_redundancy: false
-    plan_sku_code: 'F1'
-    plan_sku_tier: 'Free'
-    plan_os_kind: 'linux'
-    plan_n: 'plan-DeployOneLinuxPlanFree'
-    location: 'eastus'
-    tags: tags
+    location: location
+    agw_backend_app_names: appN.name
+    agw_sku: 'Standard_Medium'
+    agw_tier: 'Standard'
+    snet_agw_id: vnetApp.properties.subnets[1].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppStandardMedium'
   }
 }
+
+module DeployAgwOneAppStandardLarge '../main.bicep' = {
+  name: 'DeployAgwOneAppStandardLarge'
+  params: {
+    location: location
+    agw_backend_app_names: appN.name
+    agw_sku: 'Standard_Large'
+    agw_tier: 'Standard'
+    snet_agw_id: vnetApp.properties.subnets[2].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppStandardLarge'
+  }
+}
+
+module DeployAgwOneAppWAFMedium '../main.bicep' = {
+  name: 'DeployAgwOneAppWAFMedium'
+  params: {
+    location: location
+    agw_backend_app_names: appN.name
+    agw_sku: 'WAF_Medium'
+    agw_tier: 'WAF'
+    snet_agw_id: vnetApp.properties.subnets[3].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppWAFMedium'
+  }
+}
+
+module DeployAgwOneAppWAFLarge '../main.bicep' = {
+  name: 'DeployAgwOneAppWAFLarge'
+  params: {
+    location: location
+    agw_backend_app_names: appN.name
+    agw_sku: 'WAF_Large'
+    agw_tier: 'WAF'
+    snet_agw_id: vnetApp.properties.subnets[4].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppWAFLarge'
+  }
+}
+
+module DeployAgwOneAppStandardV2 '../main.bicep' = {
+  name: 'DeployAgwOneAppStandardV2'
+  params: {
+    location: location
+    agw_backend_app_names: appA.name
+    agw_sku: 'Standard_v2'
+    agw_tier: 'Standard_v2'
+    snet_agw_id: vnetApp.properties.subnets[5].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppStandardV2'
+  }
+}
+
+module DeployAgwOneAppStandardWAFV2 '../main.bicep' = {
+  name: 'DeployAgwOneAppStandardWAFV2'
+  params: {
+    location: location
+    agw_backend_app_names: appA.name
+    agw_sku: 'WAF_v2'
+    agw_tier: 'WAF_v2'
+    snet_agw_id: vnetApp.properties.subnets[6].id
+    agw_front_end_ports: '80'
+    agw_n: 'agw-DeployAgwOneAppStandardWAFV2'
+  }
+}
+
+module DeployAgwMultiAppStandardV2 '../main.bicep' = {
+  name: 'DeployAgwMultiAppStandardV2'
+  params: {
+    location: location
+    agw_backend_app_names: '${appA.name},${appB.name},${appC.name}'
+    agw_sku: 'Standard_v2'
+    agw_tier: 'Standard_v2'
+    snet_agw_id: vnetApp.properties.subnets[7].id
+    agw_front_end_ports: '80,8080,8081'
+    agw_n: 'agw-DeployAgwMultiAppStandardV2'
+  }
+}
+
+module DeployAgwMultiAppStandardV2CustomScaling '../main.bicep' = {
+  name: 'DeployAgwMultiAppStandardV2CustomScaling'
+  params: {
+    agw_capacity:2
+    agw_max_capacity: 32
+    location: location
+    agw_backend_app_names: '${appA.name},${appB.name},${appC.name}'
+    agw_sku: 'Standard_v2'
+    agw_tier: 'Standard_v2'
+    snet_agw_id: vnetApp.properties.subnets[8].id
+    agw_front_end_ports: '80,8080,8081'
+    agw_n: 'agw-DeployAgwMultiAppStandardV2CustomScaling'
+  }
+}
+
