@@ -1,8 +1,8 @@
 on: [release]
 
 env:
-  ACR_MODULE_N: agw
-  RG_N: rg-azure-bicep-application-gateway
+  ACR_MODULE_N: fd
+  RG_N: rg-azure-bicep-front-door
 
 name: PROD - Deploy Azure Resource
 jobs:
