@@ -16,8 +16,26 @@
 
 </br>
 
+```bash
+# Create an Azure resource group where the resources will be deployed
+
+# ---
+# Main Vars
+# ---
+repo_n="azure-bicep-repo-baseline";          echo $repo_n
+project="bicephub";                          echo $project
+env="prod";                                  echo $env
+app_rg="rg-$repo_n";                         echo $repo_n
+l="eastus2";                                 echo $l
+tags="env=$env project=$project";            echo $tags
+
+az group create \
+--name $app_rg \
+--location $l \
+--tags $tags
+```
+
 ```yaml
-Create an Azure resource group where the resources will be deployed
 Create an Azure App Registration if you don't have one
 Create an Azure App Registration Secret to be used in the GH Environment AZURE_CREDENTIALS secret
 Assign the Azure App Registration contributor RBAC to the RG
