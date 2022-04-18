@@ -25,7 +25,7 @@
 repo_n="azure-bicep-repo-baseline";          echo $repo_n
 project="bicephub";                          echo $project
 env="prod";                                  echo $env
-app_rg="rg-$repo_n";                         echo $repo_n
+app_rg="rg-$repo_n";                         echo $app_rg
 l="eastus2";                                 echo $l
 tags="env=$env project=$project";            echo $tags
 
